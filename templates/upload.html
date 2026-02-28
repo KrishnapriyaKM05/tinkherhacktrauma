@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Upload PDF — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="form-card">
+    <h1>Upload PDF</h1>
+    <p>Upload a text-based PDF and assign it a study topic.</p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Topic Name</label>
+            <input type="text" name="topic" required placeholder="e.g. Biology Chapter 3, Machine Learning"
+                   autofocus>
+            <small>This groups your PDFs and tracks memory per topic.</small>
+        </div>
+        <div class="form-group">
+            <label>PDF File</label>
+            <input type="file" name="pdf_file" accept=".pdf" required>
+            <small>Text-based PDFs only. Scanned images may not extract well.</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload &amp; Extract Text</button>
+        <a href="{{ url_for('pdf.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

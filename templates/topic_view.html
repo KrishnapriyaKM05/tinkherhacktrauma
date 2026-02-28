@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ topic }} — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>📚 {{ topic }}</h1>
+    <a href="{{ url_for('curve.curve_view', topic=topic) }}" class="btn btn-accent">📈 View Forgetting Curve</a>
+</div>
+
+<div class="info-bar">
+    <span>ML Learned λ: <strong>{{ "%.4f"|format(learned_lambda) }}</strong></span>
+    {% if last_time is not none %}
+    <span>Last attempt at: <strong>Day {{ last_time }}</strong></span>
+    {% endif %}
+</div>
+
+<h2>PDFs in this Topic</h2>
+{% if pdfs %}
+<div class="pdf-list">
+    {% for pdf in pdfs %}
+    <div class="pdf-item">
+        <span>📄 {{ pdf.filename }}</span>
+        <a href="{{ url_for('quiz.generate', pdf_id=pdf.id) }}" class="btn btn-primary btn-sm">Generate Quiz</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No PDFs uploaded for this topic. <a href="{{ url_for('pdf.upload') }}">Upload one.</a></p>
+{% endif %}
+
+<h2>Attempt History</h2>
+{% if attempts %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Simulated Day</th>
+            <th>Score</th>
+            <th>Retention %</th>
+            <th>Completed</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for a in attempts %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>Day {{ a.simulated_time_days }}</td>
+        <td>{{ "%.0f"|format(a.score_pct * 100) }}%</td>
+        <td>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ a.score_pct * 100 }}%"></div>
+            </div>
+        </td>
+        <td>{{ a.completed_at | string | truncate(16, True, '') }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>No attempts yet. Generate a quiz to start tracking your memory!</p>
+</div>
+{% endif %}
+{% endblock %}

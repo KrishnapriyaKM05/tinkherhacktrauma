@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Set Simulated Time — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="form-card">
+    <h1>⏱ Set Simulated Time</h1>
+    <p>Choose what <strong>simulated day</strong> you are taking this quiz on.</p>
+    <p>This models time passing between study sessions.</p>
+
+    {% if last_time %}
+    <div class="alert alert-info">
+        Your last attempt was on <strong>Day {{ last_time }}</strong>.
+        You must choose a later day.
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Simulated Day: <span id="time-display">{{ "%d"|format(min_time) }}</span></label>
+            <input type="range" id="time-slider"
+                   name="simulated_time"
+                   min="0"
+                   max="90"
+                   step="1"
+                   value="{{ min_time }}"
+                   oninput="document.getElementById('time-display').textContent = this.value">
+        </div>
+        <div class="time-context">
+            <p>Day 0 = First study session</p>
+            <p>Day 7 = One week later</p>
+            <p>Day 30 = One month later</p>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Quiz for Day <span id="btn-day">{{ "%.1f"|format(min_time) }}</span></button>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const slider = document.getElementById('time-slider');
+slider.addEventListener('input', function() {
+    document.getElementById('time-display').textContent = this.value;
+    document.getElementById('btn-day').textContent = this.value;
+});
+</script>
+{% endblock %}

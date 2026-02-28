@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Result — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="result-card">
+    <h1>Quiz Result</h1>
+    <div class="score-display">
+        <div class="score-circle" style="--pct: {{ (score_pct * 100)|int }}">
+            <span class="score-number">{{ (score_pct * 100)|int }}%</span>
+        </div>
+        <p>{{ correct_count }} / {{ total }} correct</p>
+        <p class="sim-time">Taken on Simulated Day <strong>{{ sim_time }}</strong></p>
+    </div>
+
+    <div class="ml-panel">
+        <h3>🤖 ML Model Update</h3>
+        <div class="ml-grid">
+            <div>
+                <label>Learned λ (decay rate)</label>
+                <strong>{{ "%.4f"|format(ml_result.learned_lambda) }}</strong>
+            </div>
+            <div>
+                <label>R₀ Boost</label>
+                <strong>{{ "%+.4f"|format(ml_result.learned_r0_boost) }}</strong>
+            </div>
+            <div>
+                <label>Attempts used</label>
+                <strong>{{ ml_result.num_attempts }}</strong>
+            </div>
+        </div>
+        <details class="ml-explanation">
+            <summary>How was λ estimated?</summary>
+            <p>{{ ml_result.lambda_explanation }}</p>
+        </details>
+        <details class="ml-explanation">
+            <summary>How was R₀ boost estimated?</summary>
+            <p>{{ ml_result.boost_explanation }}</p>
+        </details>
+    </div>
+
+    <h2>Answer Review</h2>
+    {% for q in questions %}
+    {% set ans = answers[loop.index0] %}
+    <div class="review-item {{ 'correct' if ans.is_correct else 'incorrect' }}">
+        <p class="review-q"><strong>Q{{ loop.index }}:</strong> {{ q.question_text }}</p>
+        <p>Your answer: <strong>{{ ans.selected_option or "—" }}</strong>
+           | Correct: <strong>{{ q.correct_option }}</strong>
+           {{ "✅" if ans.is_correct else "❌" }}</p>
+    </div>
+    {% endfor %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('quiz.topic_view', topic=topic) }}" class="btn btn-secondary">Back to Topic</a>
+        <a href="{{ url_for('curve.curve_view', topic=topic) }}" class="btn btn-accent">📈 View Forgetting Curve</a>
+    </div>
+</div>
+{% endblock %}

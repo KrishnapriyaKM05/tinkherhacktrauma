@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <h1>🧠 Cognitive Memory Analytics</h1>
+    <p class="subtitle">Track how your memory decays and recovers over time</p>
+    <h2>Login</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" required autofocus>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    <p class="form-footer">Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
+</div>
+{% endblock %}

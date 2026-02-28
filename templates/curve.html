@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Forgetting Curve — {{ topic }} — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>📈 Forgetting Curve: {{ topic }}</h1>
+    <a href="{{ url_for('quiz.topic_view', topic=topic) }}" class="btn btn-secondary">← Back to Topic</a>
+</div>
+
+<div class="curve-controls">
+    <label>Current Simulated Day: <strong id="current-day-label">30</strong></label>
+    <input type="range" id="sim-slider" min="0" max="90" step="1" value="30">
+</div>
+
+<div class="legend">
+    <span class="legend-item"><span class="dot dot-baseline"></span> Baseline (λ=0.1)</span>
+    <span class="legend-item"><span class="dot dot-learned"></span> ML-Learned λ</span>
+    <span class="legend-item"><span class="dot dot-attempt"></span> Quiz Attempt</span>
+</div>
+
+<canvas id="curve-canvas" width="900" height="420"></canvas>
+
+<div id="curve-info" class="curve-info-panel">
+    <p>Loading curve data...</p>
+</div>
+
+<div class="curve-explanation">
+    <h3>How to read this graph</h3>
+    <p>Each <strong>drop</strong> shows memory decaying over simulated time. Each <strong>jump</strong> shows retention resetting after a quiz reattempt. The <em>baseline</em> uses a fixed decay rate (λ=0.1). The <em>learned curve</em> uses a decay rate estimated from your personal quiz history via log-linear regression.</p>
+    <p>Formula per segment: <code>R(t) = R₀ · e<sup>-λ(t - t₀)</sup></code></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/curve.js') }}"></script>
+<script>
+    // Initialize the curve viewer with the current topic
+    initCurve("{{ topic }}");
+</script>
+{% endblock %}

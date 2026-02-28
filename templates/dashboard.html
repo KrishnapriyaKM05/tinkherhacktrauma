@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AFFOGOTO{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Your Study Topics</h1>
+    <a href="{{ url_for('pdf.upload') }}" class="btn btn-primary">+ Upload PDF</a>
+</div>
+
+{% if not pdfs %}
+<div class="empty-state">
+    <p>📄 No PDFs uploaded yet.</p>
+    <p>Upload a PDF to start tracking your memory retention.</p>
+    <a href="{{ url_for('pdf.upload') }}" class="btn btn-primary">Upload First PDF</a>
+</div>
+{% else %}
+<div class="topics-grid">
+    {% for topic in topics %}
+    <div class="topic-card">
+        <div class="topic-header">
+            <h2>{{ topic }}</h2>
+        </div>
+        <div class="topic-actions">
+            <a href="{{ url_for('quiz.topic_view', topic=topic) }}" class="btn btn-secondary">Study &amp; Quiz</a>
+            <a href="{{ url_for('curve.curve_view', topic=topic) }}" class="btn btn-accent">📈 View Curve</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<h2 class="section-title">All Uploaded PDFs</h2>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Filename</th>
+            <th>Topic</th>
+            <th>Uploaded</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for pdf in pdfs %}
+    <tr>
+        <td>{{ pdf.filename }}</td>
+        <td><span class="badge">{{ pdf.topic }}</span></td>
+        <td>{{ pdf.uploaded_at | string | truncate(16, True, '') }}</td>
+        <td><a href="{{ url_for('quiz.generate', pdf_id=pdf.id) }}">Take Quiz</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

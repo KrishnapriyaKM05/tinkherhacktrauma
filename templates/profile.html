@@ -1,0 +1,491 @@
+
+{% extends "base.html" %}
+{% block title %}Profile — Cognitive Memory Analytics{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Profile-specific styles ── */
+  /*@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+*/
+  .profile-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.3rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .stat-pill:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .stat-pill::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-gradient, linear-gradient(90deg, var(--primary), var(--accent)));
+  }
+  .stat-pill.accent-green::before { background: linear-gradient(90deg, var(--accent), #00f5b8); }
+  .stat-pill.accent-warn::before { background: linear-gradient(90deg, var(--warning), #ff8c00); }
+  .stat-pill.accent-danger::before { background: linear-gradient(90deg, var(--danger), #ff0055); }
+  .stat-pill .pill-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+     font-family: Arial, sans-serif;
+  }
+  .stat-pill .pill-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+     font-family: Arial, sans-serif;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-pill .pill-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+     font-family: Arial, sans-serif;
+  }
+
+  /* ── Averages row ── */
+  .averages-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .avg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .avg-card h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+     font-family: Arial, sans-serif;
+  }
+  .avg-big {
+    font-size: 2.8rem;
+    font-weight: 800;
+     font-family: Arial, sans-serif;
+    line-height: 1;
+  }
+  .avg-big.retention-color { color: var(--accent); }
+  .avg-big.lambda-color { color: var(--warning); }
+  .avg-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 0.8rem;
+  }
+  .avg-desc code {
+    background: var(--surface2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+     font-family: Arial, sans-serif;
+    color: var(--accent);
+    font-size: 0.8rem;
+  }
+
+  /* ── Topic cards ── */
+  .topics-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8rem;
+     font-family: Arial, sans-serif;
+  }
+  .topic-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  .topic-profile-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .topic-profile-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px rgba(108,99,255,0.2), var(--shadow);
+  }
+  .topic-card-header {
+    padding: 1rem 1.2rem 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+  }
+  .topic-name {
+    font-size: 1rem;
+    font-weight: 700;
+     font-family: Arial, sans-serif;
+    color: var(--text);
+    max-width: 70%;
+    word-break: break-word;
+  }
+  .trend-badge {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 700;
+     font-family: Arial, sans-serif;
+    letter-spacing: 0.05em;
+  }
+  .trend-improving { background: rgba(0,217,163,0.15); color: var(--accent); }
+  .trend-declining { background: rgba(255,90,95,0.15); color: var(--danger); }
+  .trend-stable { background: rgba(108,99,255,0.15); color: var(--primary); }
+  .trend-new { background: rgba(255,179,71,0.15); color: var(--warning); }
+
+  .topic-card-body { padding: 1rem 1.2rem; }
+
+  /* Retention arc */
+  .retention-arc-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .retention-arc {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+  }
+  .retention-arc svg { width: 70px; height: 70px; transform: rotate(-90deg); }
+  .arc-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+  .arc-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+  .arc-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+     font-family: Arial, sans-serif;
+  }
+  .retention-meta { flex: 1; }
+  .retention-meta .rm-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.15rem;
+     font-family: Arial, sans-serif;
+  }
+  .retention-meta .rm-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+     font-family: Arial, sans-serif;
+    color: var(--accent);
+  }
+  .retention-meta .rm-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  /* Stats mini grid */
+  .topic-stats-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  .mini-stat {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  .mini-stat .ms-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+     font-family: Arial, sans-serif;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  .mini-stat .ms-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+     font-family: Arial, sans-serif;
+  }
+  .ms-best { color: var(--accent); }
+  .ms-worst { color: var(--danger); }
+  .ms-lambda { color: var(--warning); }
+
+  /* Decay bar */
+  .decay-bar-wrap {
+    margin-top: 0.8rem;
+  }
+  .decay-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+     font-family: Arial, sans-serif;
+    margin-bottom: 0.3rem;
+  }
+  .decay-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .decay-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--warning));
+  }
+
+  .topic-card-footer {
+    padding: 0.7rem 1.2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  /* No data state */
+  .profile-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .profile-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .profile-empty p { margin-bottom: 1.5rem; }
+
+  /* Section separator */
+  .section-sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .profile-hero { grid-template-columns: 1fr 1fr; }
+    .averages-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 450px) {
+    .profile-hero { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="container">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:1.7rem;">
+        🧠 Memory Profile
+      </h1>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.3rem;">
+        @{{ username }} &mdash; personalized forgetting analytics
+      </p>
+    </div>
+    <a href="{{ url_for('pdf.dashboard') }}" class="btn btn-secondary">← Dashboard</a>
+  </div>
+
+  {% if stats.total_topics == 0 %}
+  <!-- Empty state -->
+  <div class="profile-empty">
+    <div class="empty-icon">📭</div>
+    <h2 style="font-family:'Syne',sans-serif;margin-bottom:0.5rem;">No data yet</h2>
+    <p>Upload a PDF and take your first quiz to start building your memory profile.</p>
+    <a href="{{ url_for('pdf.upload') }}" class="btn btn-primary btn-large">Upload a PDF</a>
+  </div>
+
+  {% else %}
+
+  <!-- ── Overview pills ── -->
+  <div class="profile-hero">
+    <div class="stat-pill">
+      <div class="pill-label">Topics studied</div>
+      <div class="pill-value">{{ stats.total_topics }}</div>
+      <div class="pill-sub">unique subjects</div>
+    </div>
+    <div class="stat-pill accent-green">
+      <div class="pill-label">Total attempts</div>
+      <div class="pill-value">{{ stats.total_attempts }}</div>
+      <div class="pill-sub">quiz sessions</div>
+    </div>
+    <div class="stat-pill accent-warn">
+      <div class="pill-label">Quizzes generated</div>
+      <div class="pill-value">{{ stats.total_quizzes }}</div>
+      <div class="pill-sub">via Groq LLM</div>
+    </div>
+    {% if stats.best_topic %}
+    <div class="stat-pill accent-danger">
+      <div class="pill-label">Strongest topic</div>
+      <div class="pill-value" style="font-size:1rem;margin-top:0.3rem;word-break:break-word;">
+        {{ stats.best_topic }}
+      </div>
+      <div class="pill-sub">highest current retention</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Global averages ── -->
+  <div class="averages-row">
+    <!-- Average retention -->
+    <div class="avg-card">
+      <h3>Avg. Current Retention</h3>
+      {% if stats.avg_retention is not none %}
+      <div class="avg-big retention-color">
+        {{ (stats.avg_retention * 100) | round(1) }}%
+      </div>
+      {% else %}
+      <div class="avg-big" style="color:var(--text-muted);">—</div>
+      {% endif %}
+      <div class="avg-desc">
+        Weighted average of <code>R(t)</code> across all active decay segments.
+        Higher = your memory is holding strong across subjects.
+        {% if stats.worst_topic %}
+        Weakest area: <strong style="color:var(--danger);">{{ stats.worst_topic }}</strong>.
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Average forgetting rate -->
+    <div class="avg-card">
+      <h3>Avg. Forgetting Rate (λ)</h3>
+      <div class="avg-big lambda-color">
+        {{ stats.avg_lambda }}
+      </div>
+      <div class="avg-desc">
+        ML-learned mean decay rate <code>λ</code> across all topics.
+        Baseline is <code>0.1</code>. A higher λ means faster forgetting —
+        those topics need more frequent review.
+        Formula: <code>R(t) = R₀ · e^(−λ·Δt)</code>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-sep">
+
+  <!-- ── Per-topic breakdown ── -->
+  <div class="topics-section">
+    <h2>Retention by topic</h2>
+
+    <div class="topic-profile-grid">
+      {% for t in stats.topics %}
+      {% set ret_pct = (t.current_retention * 100) | round(1) if t.current_retention is not none else 0 %}
+      {% set circumference = 163.36 %} {# 2π * 26 #}
+      {% set offset = circumference * (1 - (ret_pct / 100)) %}
+
+      <div class="topic-profile-card">
+        <!-- Header -->
+        <div class="topic-card-header">
+          <div class="topic-name">{{ t.topic }}</div>
+          <span class="trend-badge trend-{{ t.trend }}">
+            {% if t.trend == 'improving' %}↑ improving
+            {% elif t.trend == 'declining' %}↓ declining
+            {% elif t.trend == 'stable' %}→ stable
+            {% else %}★ new{% endif %}
+          </span>
+        </div>
+
+        <!-- Body -->
+        <div class="topic-card-body">
+
+          <!-- Retention arc + value -->
+          <div class="retention-arc-wrap">
+            <div class="retention-arc">
+              <svg viewBox="0 0 70 70">
+                <circle class="arc-bg" cx="35" cy="35" r="26"/>
+                <circle class="arc-fill"
+                  cx="35" cy="35" r="26"
+                  stroke="{% if ret_pct >= 70 %}var(--accent){% elif ret_pct >= 40 %}var(--warning){% else %}var(--danger){% endif %}"
+                  stroke-dasharray="{{ circumference }}"
+                  stroke-dashoffset="{{ offset | round(2) }}"
+                />
+              </svg>
+              <div class="arc-label" >
+                {{ ret_pct }}%
+              </div>
+            </div>
+            <div class="retention-meta">
+              <div class="rm-label">Current retention</div>
+              <div class="rm-value">
+                {% if t.current_retention is not none %}
+                  {{ ret_pct }}%
+                {% else %}
+                  No data
+                {% endif %}
+              </div>
+              <div class="rm-sub">
+                {{ t.attempt_count }} attempt{{ 's' if t.attempt_count != 1 else '' }}
+                · Last on day {{ t.latest_attempt_day }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Mini stats: best, worst, lambda -->
+          <div class="topic-stats-mini">
+            <div class="mini-stat">
+              <span class="ms-label">Best score</span>
+              <span class="ms-value ms-best">
+                {% if t.best_score is not none %}{{ (t.best_score * 100) | round }}%{% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="mini-stat">
+              <span class="ms-label">Worst score</span>
+              <span class="ms-value ms-worst">
+                {% if t.worst_score is not none %}{{ (t.worst_score * 100) | round }}%{% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="mini-stat">
+              <span class="ms-label">λ (decay)</span>
+              <span class="ms-value ms-lambda">{{ t.learned_lambda }}</span>
+            </div>
+          </div>
+
+          <!-- Decay rate bar: 0 = slow forgetter, 2 = fast forgetter -->
+          <div class="decay-bar-wrap">
+            <div class="decay-bar-label">
+              <span>slow forgetting</span>
+              <span>fast forgetting</span>
+            </div>
+            <div class="decay-bar">
+              <div class="decay-fill"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="topic-card-footer">
+          <a href="{{ url_for('quiz.topic_view', topic=t.topic) }}" class="btn btn-secondary btn-sm">Study</a>
+          <a href="{{ url_for('curve.curve_view', topic=t.topic) }}" class="btn btn-primary btn-sm">View Curve</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}
