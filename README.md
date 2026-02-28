@@ -73,7 +73,7 @@ Unlike static flashcard tools, this system uses log-linear regression to **learn
 
 ## 🎥 Demo Video
 
-▶️ [Watch the Demo](https://youtube.com/your-demo-link)
+(https://drive.google.com/file/d/1vUOr7L9AihX__ptTRYPwgWSMJxFBacFU/view?usp=sharing)
 
 *The demo covers: uploading a PDF, taking a quiz, viewing the live forgetting curve update, and advancing simulated time to observe decay.*
 
