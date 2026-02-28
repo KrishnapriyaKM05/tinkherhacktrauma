@@ -1,29 +1,3 @@
-/**
- * static/js/curve.js
- * ===================
- * Forgetting curve visualization using HTML5 Canvas (no libraries).
- *
- * WHAT IT DRAWS:
- * --------------
- * 1. Baseline decay curve     — purple line — fixed λ=0.1
- * 2. ML-learned decay curve   — teal line   — ML-adjusted λ
- * 3. Attempt scatter points   — orange dots — actual quiz scores
- * 4. Vertical "current time"  — dashed line — from slider
- * 5. Retention % at cursor    — tooltip overlay
- *
- * PIECEWISE STRUCTURE:
- * --------------------
- * The server returns pre-computed (t, retention) points for the full
- * piecewise curve. Each segment is a separate exponential decay with a
- * visible jump at each reattempt time. The frontend just plots the points.
- *
- * TECH:
- * -----
- * - Pure Canvas 2D API
- * - No chart libraries (Recharts, Chart.js, D3, etc.)
- * - Updates dynamically on slider input
- */
-
 let currentTopic = "";
 let curveData = null;  // Cached API response
 
@@ -96,9 +70,13 @@ function drawCurve(canvas, data, currentTime) {
     // Clear
     ctx.clearRect(0, 0, W, H);
 
+    // Background fill
+    ctx.fillStyle = "#edeae3";
+    ctx.fillRect(0, 0, W, H);
+
     if (!data.has_data) {
-        ctx.fillStyle = "#8891b8";
-        ctx.font = "16px system-ui";
+        ctx.fillStyle = "#6b7c6b";
+        ctx.font = "16px Georgia, serif";
         ctx.textAlign = "center";
         ctx.fillText("No quiz attempts yet. Take a quiz to see your forgetting curve.", W / 2, H / 2);
         return;
@@ -115,7 +93,7 @@ function drawCurve(canvas, data, currentTime) {
     const ty = r => padding.top + (1 - r) * plotH;
 
     // --- Draw grid ---
-    ctx.strokeStyle = "#2e3150";
+    ctx.strokeStyle = "#dfd9ce";
     ctx.lineWidth = 1;
     for (let r = 0; r <= 1.0; r += 0.2) {
         const y = ty(r);
@@ -134,7 +112,7 @@ function drawCurve(canvas, data, currentTime) {
     }
 
     // --- Axes ---
-    ctx.strokeStyle = "#8891b8";
+    ctx.strokeStyle = "#c8bfb0";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(padding.left, padding.top);
@@ -143,8 +121,8 @@ function drawCurve(canvas, data, currentTime) {
     ctx.stroke();
 
     // --- Y-axis labels ---
-    ctx.fillStyle = "#8891b8";
-    ctx.font = "12px system-ui";
+    ctx.fillStyle = "#6b7c6b";
+    ctx.font = "12px Georgia, serif";
     ctx.textAlign = "right";
     for (let r = 0; r <= 1.0; r += 0.2) {
         ctx.fillText((r * 100).toFixed(0) + "%", padding.left - 6, ty(r) + 4);
@@ -157,8 +135,8 @@ function drawCurve(canvas, data, currentTime) {
     }
 
     // --- Axis titles ---
-    ctx.fillStyle = "#8891b8";
-    ctx.font = "12px system-ui";
+    ctx.fillStyle = "#6b7c6b";
+    ctx.font = "12px Georgia, serif";
     ctx.textAlign = "center";
     ctx.fillText("Simulated Time (days)", W / 2, H - 5);
     ctx.save();
@@ -167,17 +145,17 @@ function drawCurve(canvas, data, currentTime) {
     ctx.fillText("Memory Retention", 0, 0);
     ctx.restore();
 
-    // --- Draw baseline curve (purple) ---
-    drawLine(ctx, data.baseline_curve, tMin, tMax, plotW, plotH, padding, "#6c63ff", 2.5);
+    // --- Draw baseline curve (muted sage green) ---
+    drawLine(ctx, data.baseline_curve, tMin, tMax, plotW, plotH, padding, "#8aab8a", 2.5);
 
-    // --- Draw learned curve (teal) ---
-    drawLine(ctx, data.learned_curve, tMin, tMax, plotW, plotH, padding, "#00d9a3", 2.5);
+    // --- Draw learned curve (primary forest green) ---
+    drawLine(ctx, data.learned_curve, tMin, tMax, plotW, plotH, padding, "#073B3A", 2.5);
 
     // --- Draw current time marker ---
     if (currentTime >= tMin && currentTime <= tMax) {
         const cx = tx(currentTime);
         ctx.setLineDash([5, 4]);
-        ctx.strokeStyle = "#ffb347";
+        ctx.strokeStyle = "#b07d3b";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(cx, padding.top);
@@ -186,8 +164,8 @@ function drawCurve(canvas, data, currentTime) {
         ctx.setLineDash([]);
 
         // Label
-        ctx.fillStyle = "#ffb347";
-        ctx.font = "11px system-ui";
+        ctx.fillStyle = "#b07d3b";
+        ctx.font = "11px Georgia, serif";
         ctx.textAlign = "center";
         ctx.fillText("Now", cx, padding.top - 8);
     }
@@ -198,9 +176,9 @@ function drawCurve(canvas, data, currentTime) {
         const y = ty(a.score_pct);
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffb347";
+        ctx.fillStyle = "#b07d3b";
         ctx.fill();
-        ctx.strokeStyle = "#fff";
+        ctx.strokeStyle = "#edeae3";
         ctx.lineWidth = 1.5;
         ctx.stroke();
     });
@@ -239,7 +217,6 @@ function drawLine(ctx, points, tMin, tMax, plotW, plotH, padding, color, lineWid
             const prevR = points[i - 1].retention;
             const currR = p.retention;
             if (currR - prevR > 0.05) {
-                // End current path and start new one (the "jump")
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.strokeStyle = color;
@@ -293,7 +270,7 @@ function drawTooltip(canvas, e, data) {
     const px = tx(t);
 
     // Vertical line
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.strokeStyle = "rgba(46, 61, 46, 0.2)";
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -310,23 +287,23 @@ function drawTooltip(canvas, e, data) {
         const text2 = `Learned: ${(pt.retention * 100).toFixed(1)}%`;
         const text3 = basePt ? `Baseline: ${(basePt.retention * 100).toFixed(1)}%` : "";
 
-        ctx.fillStyle = "rgba(26, 29, 46, 0.95)";
-        ctx.strokeStyle = "#6c63ff";
+        ctx.fillStyle = "rgba(237, 234, 227, 0.97)";
+        ctx.strokeStyle = "#3b6b3b";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(boxX, boxY, 160, text3 ? 60 : 45, 6);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = "#e8eaf6";
-        ctx.font = "bold 12px system-ui";
+        ctx.fillStyle = "#2e3d2e";
+        ctx.font = "bold 12px Georgia, serif";
         ctx.textAlign = "left";
         ctx.fillText(text1, boxX + 10, boxY + 17);
-        ctx.font = "12px system-ui";
-        ctx.fillStyle = "#00d9a3";
+        ctx.font = "12px Georgia, serif";
+        ctx.fillStyle = "#3b6b3b";
         ctx.fillText(text2, boxX + 10, boxY + 33);
         if (text3) {
-            ctx.fillStyle = "#6c63ff";
+            ctx.fillStyle = "#8aab8a";
             ctx.fillText(text3, boxX + 10, boxY + 49);
         }
     }
