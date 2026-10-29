@@ -17,6 +17,7 @@ function initCurve(topic) {
 
     // Initial load
     fetchAndDraw(parseFloat(slider.value));
+    loadPerformanceMetrics(topic);
 
     // Update on slider change
     slider.addEventListener("input", function () {
@@ -353,4 +354,62 @@ function updateInfoPanel(data) {
             ? `<br><small>ML has adjusted your decay rate based on ${data.attempts.length} historical attempt(s).</small>`
             : `<small> — Need 2+ attempts to personalize the decay rate.</small>`}
     `;
+}
+
+/**
+ * Fetch XGBoost & Ensemble performance metrics and populate the comparison table.
+ *
+ * @param {string} topic
+ */
+function loadPerformanceMetrics(topic) {
+    const tbody = document.getElementById("metrics-tbody");
+    const msgBox = document.getElementById("metrics-message");
+    const table = document.getElementById("metrics-table");
+    if (!tbody) return;
+
+    fetch(`/api/model-performance/${encodeURIComponent(topic)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "insufficient_data") {
+                table.style.display = "none";
+                msgBox.style.display = "block";
+                msgBox.innerHTML = `ℹ️ <em>${data.message}</em> (Complete at least 2 quizzes on this topic to train and evaluate the ensemble).`;
+                return;
+            }
+
+            table.style.display = "table";
+            msgBox.style.display = "none";
+
+            const fmt = (val) => (typeof val === "number" && !isNaN(val)) ? val.toFixed(4) : "—";
+
+            tbody.innerHTML = `
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.75rem;"><strong>Baseline Ebbinghaus</strong> (Theoretical λ=0.1)</td>
+                    <td style="padding: 0.75rem;">${fmt(data.baseline_ebbinghaus.mae)}</td>
+                    <td style="padding: 0.75rem;">${fmt(data.baseline_ebbinghaus.rmse)}</td>
+                    <td style="padding: 0.75rem;">${fmt(data.baseline_ebbinghaus.r2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.75rem;"><strong>Standalone XGBoost</strong></td>
+                    <td style="padding: 0.75rem;">${fmt(data.standalone_xgboost.mae)}</td>
+                    <td style="padding: 0.75rem;">${fmt(data.standalone_xgboost.rmse)}</td>
+                    <td style="padding: 0.75rem;">${fmt(data.standalone_xgboost.r2)}</td>
+                </tr>
+                <tr style="background: rgba(7, 59, 58, 0.08); font-weight: bold;">
+                    <td style="padding: 0.75rem; color: var(--primary);">🌟 <strong>Hybrid Ensemble (Ebbinghaus + XGBoost)</strong></td>
+                    <td style="padding: 0.75rem; color: var(--primary);">${fmt(data.ensemble_model.mae)}</td>
+                    <td style="padding: 0.75rem; color: var(--primary);">${fmt(data.ensemble_model.rmse)}</td>
+                    <td style="padding: 0.75rem; color: var(--primary);">${fmt(data.ensemble_model.r2)}</td>
+                </tr>
+            `;
+        })
+        .catch(err => {
+            console.error("Failed to load model performance:", err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--danger); padding: 1rem;">
+                        Could not load performance metrics.
+                    </td>
+                </tr>`;
+        });
 }

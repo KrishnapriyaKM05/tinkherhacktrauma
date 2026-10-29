@@ -28,6 +28,34 @@
     <p>Each <strong>drop</strong> shows memory decaying over simulated time. Each <strong>jump</strong> shows retention resetting after a quiz reattempt. The <em>baseline</em> uses a fixed decay rate (λ=0.1). The <em>learned curve</em> uses a decay rate estimated from your personal quiz history via log-linear regression.</p>
     <p>Formula per segment: <code>R(t) = R₀ · e<sup>-λ(t - t₀)</sup></code></p>
 </div>
+
+<!-- 📊 Model Performance Comparison Table -->
+<div class="metrics-card" style="margin-top: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
+  <h3 style="margin-bottom: 0.5rem; color: var(--text);">📊 Model Performance Comparison</h3>
+  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+    Comparative evaluation of theoretical Ebbinghaus decay, standalone XGBoost, and the hybrid ensemble model.
+  </p>
+
+  <div id="metrics-message" style="display: none; padding: 1rem; color: var(--text-muted); text-align: center;"></div>
+
+  <table class="data-table" id="metrics-table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="text-align: left; border-bottom: 2px solid var(--border);">
+        <th style="padding: 0.75rem;">Model</th>
+        <th style="padding: 0.75rem;">MAE (↓ Error)</th>
+        <th style="padding: 0.75rem;">RMSE (↓ Error)</th>
+        <th style="padding: 0.75rem;">R² Score (↑ Fit)</th>
+      </tr>
+    </thead>
+    <tbody id="metrics-tbody">
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+          ⏳ Evaluating models on attempt history...
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 {% endblock %}
 
 {% block scripts %}

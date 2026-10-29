@@ -24,6 +24,26 @@ from routes.pdf_routes import login_required
 
 curve_bp = Blueprint("curve", __name__)
 
+from services.ensemble_service import MemoryEnsembleModel
+
+@curve_bp.route("/api/model-performance/<topic>")
+@login_required
+def model_performance(topic: str):
+    db = get_db()
+    user_id = session["user_id"]
+
+    rows = db.execute("""
+        SELECT simulated_time_days, score_pct
+        FROM attempts
+        WHERE user_id = ? AND topic = ?
+        ORDER BY simulated_time_days ASC
+    """, (user_id, topic)).fetchall()
+
+    attempts = [dict(r) for r in rows]
+    model = MemoryEnsembleModel()
+    metrics = model.train_and_evaluate(attempts)
+
+    return jsonify(metrics)
 
 @curve_bp.route("/curve/<topic>")
 @login_required

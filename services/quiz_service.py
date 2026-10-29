@@ -7,7 +7,7 @@ LLM DEPENDENCY (REQUIRED — NOT OPTIONAL):
 ------------------------------------------
 This service uses the Groq SDK to generate multiple-choice questions.
 - Provider: Groq (https://console.groq.com)
-- Model: llama-3.1-8b-instant
+- Model: openai/gpt-oss-120b
 - Requires: GROQ_API_KEY environment variable
 - Install: pip install groq
 - Offline mode: NOT supported
@@ -26,7 +26,7 @@ import re
 from typing import List, Dict
 
 
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = "openai/gpt-oss-120b"
 DEFAULT_NUM_QUESTIONS = 5
 
 

@@ -29,9 +29,12 @@ Unlike static flashcard tools, this system uses log-linear regression to **learn
 - Werkzeug (password hashing)
 
 **AI / ML**
-- Groq API (`llama3-8b-8192`) — LLM quiz generation
+- Groq API (`openai/gpt-oss-120b`) — LLM quiz generation
 - Custom log-linear regression for λ (decay rate) learning
+- XGBoost (`xgboost>=2.0.0`) — Gradient-boosted decision trees for cognitive retention modeling
+- Scikit-learn (`scikit-learn>=1.3.0`) — Evaluation metrics (MAE, RMSE, R²) and data pipeline
 - Piecewise exponential forgetting curve: `R(t) = R₀ · exp(-λ · Δt)`
+- Hybrid Domain-Informed Ensemble (Ebbinghaus Prior + XGBoost Blending)
 
 **DevOps & Tools**
 - Git & GitHub
@@ -45,13 +48,15 @@ Unlike static flashcard tools, this system uses log-linear regression to **learn
 
 2. **ML-Learned Decay Parameters** — Uses log-linear regression on consecutive quiz attempts to learn each user's personal decay rate (λ) and retention boost (R₀). Falls back gracefully to λ=0.1 with fewer than 2 attempts.
 
-3. **AI-Powered Quiz Generation** — Integrates with Groq's LLM API to auto-generate 5 multiple-choice questions directly from uploaded PDF content, with no manual question writing needed.
+3. **Hybrid Ensemble & Performance Benchmarks** — Ensembles parametric Ebbinghaus decay with an XGBoost regressor using a 5-dimensional feature matrix. Renders live comparative metrics (MAE, RMSE, R² Score) comparing Baseline Ebbinghaus, Standalone XGBoost, and the Hybrid Ensemble.
 
-4. **PDF Upload & Text Extraction** — Users upload study materials as PDFs. The system extracts text via `pypdf` and stores it for on-demand quiz generation tied to each topic.
+4. **AI-Powered Quiz Generation** — Integrates with Groq's LLM API to auto-generate 5 multiple-choice questions directly from uploaded PDF content, with no manual question writing needed.
 
-5. **Simulated Time Progression** — A UI slider (0–90 days) lets users advance simulated time without real waiting, enabling rapid testing of memory decay across different study schedules.
+5. **PDF Upload & Text Extraction** — Users upload study materials as PDFs. The system extracts text via `pypdf` and stores it for on-demand quiz generation tied to each topic.
 
-6. **Secure Multi-User Auth** — Session-based authentication with `pbkdf2:sha256` password hashing. All data is strictly scoped per user — no cross-user data leakage.
+6. **Simulated Time Progression** — A UI slider (0–90 days) lets users advance simulated time without real waiting, enabling rapid testing of memory decay across different study schedules.
+
+7. **Secure Multi-User Auth** — Session-based authentication with `pbkdf2:sha256` password hashing. All data is strictly scoped per user — no cross-user data leakage.
 
 ---
 
@@ -102,6 +107,7 @@ Base URL: `http://localhost:5000`
 | POST   | `/quiz/generate`      | Generate a quiz from a PDF topic     | ✅ Yes         |
 | POST   | `/quiz/submit`        | Submit quiz answers and get score    | ✅ Yes         |
 | GET    | `/curve/<topic_id>`   | Get forgetting curve data for topic  | ✅ Yes         |
+| GET    | `/api/model-performance/<topic>` | Get comparative ML metrics (Baseline vs XGBoost vs Ensemble) | ✅ Yes |
 
 
 ---
@@ -161,12 +167,12 @@ cognitive_memory/
 ├── services/                        # ALL business logic lives here
 │   ├── forgetting_curve_service.py  # Piecewise R(t) = R₀·exp(-λ·Δt)
 │   ├── learning_service.py          # ML: learn λ and R₀ from history
+│   ├── ensemble_service.py          # Hybrid Ensemble: Ebbinghaus + XGBoost
 │   ├── time_simulation_service.py   # Simulated time management
 │   ├── quiz_service.py              # Groq LLM quiz generation
 │   ├── pdf_service.py               # pypdf extraction + storage
-│   └── auth_service.py              # Password hashing + auth
+│   ├── auth_service.py              # Password hashing + auth
 │   └── profileservices.py
-|   └── time_simulation_service.py
 
 ├── routes/                          # HTTP routes (no business logic)
 │   ├── auth_routes.py
@@ -238,15 +244,34 @@ R(t) = R₀ · exp(-λ · (t - t₀))
 - `R₀` = initial retention = quiz score (minimum 0.2)
 - `λ` = decay rate (baseline: 0.1; personalized via ML)
 
-**Machine Learning (Explainable, Lightweight)**
+**Machine Learning (Hybrid Domain-Informed Ensemble)**
 
-λ is learned using log-linear regression on consecutive attempt pairs:
+1. **Parametric Log-Linear Regression (λ learning)**
+   Estimates decay rate from consecutive attempt pairs:
+   ```
+   λ = -log(score_next / score_prev) / Δt
+   ```
+   Final λ = mean of all valid estimates. Falls back to λ=0.1 with fewer than 2 attempts. Initial retention boost (R₀) is tracked as an exponential moving average (EMA, α=0.3) of score improvements.
 
-```
-λ = -log(score_next / score_prev) / Δt
-```
+2. **Non-Parametric Tree Ensemble (XGBoost Regressor)**
+   Predicts next-attempt retention score using a 5-dimensional cognitive feature matrix:
+   - `delta_t`: Elapsed simulated time since prior attempt
+   - `r_prev`: Preceding quiz retention score
+   - `attempt_count`: Cumulative repetition index
+   - `avg_past`: Historical student score average
+   - `ebbinghaus_prior`: Domain-informed theoretical decay prior
 
-Final λ = mean of all valid estimates. Falls back to λ=0.1 with fewer than 2 attempts. R₀ boost is tracked as an exponential moving average of score improvements.
+3. **Hybrid Model Blending**
+   Combines analytical domain laws with gradient-boosted learning:
+   ```
+   R_ensemble = 0.5 · R_ebbinghaus + 0.5 · R_xgboost
+   ```
+
+4. **Comparative Performance Benchmarks**
+   Automatically evaluated and rendered in real-time starting from 2 attempts:
+   - **MAE** (Mean Absolute Error — average prediction divergence)
+   - **RMSE** (Root Mean Squared Error — penalizes severe prediction blunders)
+   - **R² Score** (Coefficient of Determination — goodness-of-fit)
 
 ---
 
